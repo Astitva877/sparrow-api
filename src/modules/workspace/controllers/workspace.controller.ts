@@ -413,4 +413,28 @@ export class WorkSpaceController {
     );
     return res.status(responseData.httpStatusCode).send(responseData);
   }
+
+  @Get(":workspaceId/user/:userId/disableWorkspaceNewInvite")
+  @ApiOperation({
+    summary: "Disable workspace new Invite tag",
+    description:
+      "This will disable new invite tag in workspace of user and return information about workspace",
+  })
+  async disableWorkspaceNewInvite(
+    @Param("userId") userId: string,
+    @Param("workspaceId") workspaceId: string,
+    @Res() res: FastifyReply,
+  ) {
+    const data = await this.workspaceService.disableWorkspaceNewInvite(
+      userId,
+      workspaceId,
+    );
+    const responseData = new ApiResponseService(
+      "Success",
+      HttpStatusCode.OK,
+      data,
+    );
+
+    return res.status(responseData.httpStatusCode).send(responseData);
+  }
 }

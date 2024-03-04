@@ -9,7 +9,10 @@ import {
   UpdateWorkspaceDto,
   workspaceUsersResponseDto,
 } from "../payloads/workspace.payload";
-import { Workspace } from "@src/modules/common/models/workspace.model";
+import {
+  Workspace,
+  WorkspaceWithNewInviteTag,
+} from "@src/modules/common/models/workspace.model";
 import { ContextService } from "@src/modules/common/services/context.service";
 import {
   DeleteResult,
@@ -73,8 +76,15 @@ export class WorkspaceService {
     }
     const workspaces: Workspace[] = [];
     for (const { workspaceId } of user.workspaces) {
-      const workspace = await this.get(workspaceId);
-      workspaces.push(workspace);
+      const workspaceData: WithId<WorkspaceWithNewInviteTag> = await this.get(
+        workspaceId,
+      );
+      user.workspaces.forEach((workspace) => {
+        if (workspace.workspaceId.toString() === workspaceData._id.toString()) {
+          workspaceData.isNewInvite = workspace.isNewInvite;
+        }
+      });
+      workspaces.push(workspaceData);
     }
     return workspaces;
   }
@@ -282,6 +292,7 @@ export class WorkspaceService {
         workspaceId: response.insertedId.toString(),
         name: workspaceData.name,
         teamId: workspaceData.id,
+        isNewInvite: false,
       });
     }
     const userDataPromises = [];
@@ -582,6 +593,7 @@ export class WorkspaceService {
         workspaceId: workspaceData._id.toString(),
         teamId: workspaceData.team.id,
         name: workspaceData.name,
+        isNewInvite: true,
       });
       const updatedUserParams = {
         workspaces: userWorkspaces,
@@ -733,5 +745,23 @@ export class WorkspaceService {
       }
     }
     return allUsers;
+  }
+
+  async disableWorkspaceNewInvite(
+    userId: string,
+    workspaceId: string,
+  ): Promise<WithId<Workspace>> {
+    const user = await this.userRepository.getUserById(userId);
+    const workspaces = user.workspaces.map((workspace) => {
+      if (workspace.workspaceId.toString() === workspaceId) {
+        workspace.isNewInvite = false;
+      }
+      return workspace;
+    });
+    await this.userRepository.updateUserById(new ObjectId(userId), {
+      workspaces,
+    });
+    const workspaceDetails = await this.workspaceRepository.get(workspaceId);
+    return workspaceDetails;
   }
 }
