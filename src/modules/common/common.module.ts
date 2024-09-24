@@ -18,6 +18,7 @@ import { ParserService } from "./services/parser.service";
 import { ContextService } from "./services/context.service";
 import { EmailService } from "./services/email.service";
 import { InsightsService } from "./services/insights.service";
+import { ConverterService } from "./services/converter.service";
 
 /**
  * Common Module provides global services and configurations used across the application.
@@ -78,6 +79,7 @@ import { InsightsService } from "./services/insights.service";
     ConsumerService,
     BlobStorageService,
     EmailService,
+    ConverterService,
   ],
   exports: [
     "DATABASE_CONNECTION",
@@ -91,6 +93,7 @@ import { InsightsService } from "./services/insights.service";
     BlobStorageService,
     EmailService,
     InsightsService,
+    ConverterService,
   ],
 })
 export class CommonModule {}

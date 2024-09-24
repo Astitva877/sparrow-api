@@ -22,6 +22,10 @@ import { ParserService } from "../common/services/parser.service";
 import { ApiResponseService } from "../common/services/api-response.service";
 import { HttpStatusCode } from "../common/enum/httpStatusCode.enum";
 import { curlDto } from "./payloads/curl.payload";
+import {
+  ConverterService,
+  PostmanCollection,
+} from "../common/services/converter.service";
 
 /**
  * App Controller
@@ -32,6 +36,7 @@ export class AppController {
   constructor(
     private parserService: ParserService,
     private appService: AppService,
+    private converterService: ConverterService,
   ) {}
 
   @Get("updater/:target/:arch/:currentVersion")
@@ -149,5 +154,28 @@ export class AppController {
       kafka: isKafkaConnected ? "connected" : "disconnected",
       mongo: isMongoConnected ? "connected" : "disconnected",
     });
+  }
+
+  @Post("convert")
+  @ApiOperation({
+    summary: "Convert Postman collection into OpenAPI",
+    description:
+      "This will convert the Postman Collection V2.1 format into Open API Spec 3.0",
+  })
+  @ApiResponse({ status: 201, description: "Converted Successfully" })
+  @ApiResponse({ status: 400, description: "Failed to convert" })
+  async convertPostmanJSON(
+    @Body() req: PostmanCollection,
+    @Res() res: FastifyReply,
+  ) {
+    const data = await this.converterService.convertPostmanToOpenApi(
+      req as PostmanCollection,
+    );
+    const responseData = new ApiResponseService(
+      "Collection converted",
+      HttpStatusCode.OK,
+      data,
+    );
+    return res.status(responseData.httpStatusCode).send(responseData);
   }
 }
