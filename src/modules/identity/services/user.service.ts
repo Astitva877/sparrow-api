@@ -206,6 +206,19 @@ export class UserService {
     if (userDetails?.isEmailVerified) {
       throw new BadRequestException("Email Already Verified");
     }
+    if (
+      userDetails?.emailVerificationCount > 2 &&
+      userDetails?.lastSentEmailVerificationCodeTimeStamp
+    ) {
+      const timeDifference =
+        new Date().getTime() -
+        new Date(userDetails?.lastSentEmailVerificationCodeTimeStamp).getTime();
+      const thirtyMinutesInMs = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+      if (timeDifference < thirtyMinutesInMs) {
+        throw new BadRequestException("Maximum code limit reached");
+      }
+    }
     // Create an email transporter using the email service
     const transporter = this.emailService.createTransporter();
 
@@ -227,6 +240,32 @@ export class UserService {
       },
       subject: `Your Sparrow Verification Code Inside - Let’s Get You Started!`,
     };
+    // if (userDetails?.lastSentEmailVerificationCodeTimeStamp) {
+    const timeDifference =
+      new Date().getTime() -
+      new Date(userDetails?.lastSentEmailVerificationCodeTimeStamp).getTime();
+    const thirtyMinutesInMs = 5 * 60 * 1000; // 5 minutes in milliseconds
+    // if (!userDetails?.emailVerificationCount) {
+    //   await this.userRepository.updateUserById(userDetails._id, {
+    //     emailVerificationCount: 1,
+    //     lastSentEmailVerificationCodeTimeStamp: new Date(),
+    //   });
+    // } else
+    if (
+      timeDifference > thirtyMinutesInMs ||
+      !userDetails?.emailVerificationCount
+    ) {
+      await this.userRepository.updateUserById(userDetails._id, {
+        emailVerificationCount: 1,
+        lastSentEmailVerificationCodeTimeStamp: new Date(),
+      });
+    } else {
+      await this.userRepository.updateUserById(userDetails._id, {
+        emailVerificationCount: userDetails.emailVerificationCount + 1,
+        lastSentEmailVerificationCodeTimeStamp: new Date(),
+      });
+    }
+    // }
     const promise = [
       transporter.sendMail(mailOptions),
       this.userRepository.updateEmailVerificationCode(

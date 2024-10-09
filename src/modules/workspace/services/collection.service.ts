@@ -28,7 +28,6 @@ import { TOPIC } from "@src/modules/common/enum/topic.enum";
 import { UpdatesType } from "@src/modules/common/enum/updates.enum";
 import { ProducerService } from "@src/modules/common/services/kafka/producer.service";
 import { PostmanParserService } from "@src/modules/common/services/postman.parser.service";
-
 @Injectable()
 export class CollectionService {
   constructor(
@@ -71,6 +70,24 @@ export class CollectionService {
         workspaceId: createCollectionDto.workspaceId,
       }),
     });
+    return collection;
+  }
+
+  async createDefaultCollection(): Promise<InsertOneResult> {
+    const user = await this.contextService.get("user");
+
+    const newCollection: Collection = {
+      name: "Sample Collection",
+      totalRequests: 1,
+      createdBy: user.name,
+      items: [],
+      updatedBy: user.name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const collection = await this.collectionRepository.addCollection(
+      newCollection,
+    );
     return collection;
   }
 

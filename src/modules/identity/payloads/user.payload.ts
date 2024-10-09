@@ -4,8 +4,10 @@ import { UserWorkspaceDto } from "@src/modules/common/models/user.model";
 import { Type } from "class-transformer";
 import {
   IsArray,
+  IsDate,
   IsEmail,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -45,6 +47,14 @@ export class UserDto {
   @IsOptional()
   @ValidateNested({ each: true })
   workspaces?: UserWorkspaceDto[];
+
+  @IsNumber()
+  @IsOptional()
+  emailVerificationCount?: number;
+
+  @IsDate()
+  @IsOptional()
+  lastSentEmailVerificationCodeTimeStamp?: Date;
 }
 
 export class RegisteredWith {

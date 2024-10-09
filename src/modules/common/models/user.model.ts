@@ -7,6 +7,7 @@ import {
   IsEmail,
   IsMongoId,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -97,6 +98,14 @@ export class User {
   @MaxLength(6)
   @IsOptional()
   emailVerificationCode?: string;
+
+  @IsNumber()
+  @IsOptional()
+  emailVerificationCount?: number;
+
+  @IsDate()
+  @IsOptional()
+  lastSentEmailVerificationCodeTimeStamp?: Date;
 
   @IsDate()
   @IsOptional()
