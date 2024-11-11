@@ -14,6 +14,9 @@ import { LoggerModule } from "nestjs-pino";
 import pino from "pino";
 import { APP_FILTER } from "@nestjs/core";
 import { LoggingExceptionsFilter } from "../common/exception/logging.exception-filter";
+import { GraphQLModule } from "@nestjs/graphql";
+import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
+import { join } from "path";
 
 @Module({
   imports: [
@@ -39,6 +42,11 @@ import { LoggingExceptionsFilter } from "../common/exception/logging.exception-f
       },
     }),
     AccessControlModule.forRoles(roles),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), "src/schema.gql"),
+      playground: true, // Enables the GraphQL Playground
+    }),
     ConfigModule,
     IdentityModule,
     WorkspaceModule,

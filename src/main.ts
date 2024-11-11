@@ -11,6 +11,11 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import fastyfyMultipart from "@fastify/multipart";
 import { FastifyInstance } from "fastify";
 import { ValidationError } from "class-validator";
+import { ApolloServer } from "@apollo/server";
+import {
+  fastifyApolloDrainPlugin,
+  fastifyApolloHandler,
+} from "@as-integrations/fastify";
 /**
  * The url endpoint for open api ui
  * @type {string}
@@ -101,6 +106,32 @@ const { PORT } = process.env;
       fileSize: 50 * 1024 * 1024, // Set file size limit to 50MB
     },
   });
+
+  // Instantiate ApolloServer with schema and resolvers
+  const server = new ApolloServer({
+    typeDefs: /* GraphQL schema, e.g., */ `
+      type Query {
+        hello: String
+      }
+    `,
+    resolvers: {
+      Query: {
+        hello: () => "Hello world!",
+      },
+    },
+    plugins: [
+      fastifyApolloDrainPlugin(app.getHttpAdapter().getInstance()), // Ensures Fastify shuts down gracefully
+    ],
+  });
+
+  // Start the Apollo Server instance
+  await server.start();
+
+  // Register Apollo Server with Fastify
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .register(fastifyApolloHandler(server), { path: "/graphql" });
 
   // Start the server and listen on all available network interfaces
   await app.listen(PORT, "0.0.0.0");
