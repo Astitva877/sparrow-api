@@ -12,18 +12,15 @@ import { Server, Socket } from "socket.io";
 import { AiAssistantService } from "../services/ai-assistant.service";
 import { StreamPromptPayload } from "../payloads/ai-assistant.payload";
 
+const AI_ASSISTANT_SOCKET_PORT = 9002;
 /**
  * WebSocket Gateway for AI Assistant.
  * Handles WebSocket connections, disconnections, and incoming messages
  * for the AI Assistant service.
  */
-@WebSocketGateway({
-  namespace: "/ai-assistant",
-  cors: {
-    origin: "*",
-  },
-  transports: ["websocket"],
-  methods: ["GET", "POST"],
+@WebSocketGateway(AI_ASSISTANT_SOCKET_PORT, {
+  cors: true,
+  path: "/ai-assistant",
 })
 export class AiAssistantGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
@@ -35,11 +32,8 @@ export class AiAssistantGateway
 
   /**
    * Lifecycle hook that runs when the WebSocket gateway is initialized.
-   *
-   * @param {Server} server - The WebSocket server instance.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async afterInit(server: Server) {
+  async afterInit() {
     console.log("WebSocket Gateway initialized!");
   }
 
@@ -78,14 +72,7 @@ export class AiAssistantGateway
   }
 }
 
-@WebSocketGateway({
-  namespace: "/dummy",
-  cors: {
-    origin: "*",
-  },
-  transports: ["websocket"],
-  methods: ["GET", "POST"],
-})
+// @WebSocketGateway({ path: "/dummy" })
 export class DummyGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -93,9 +80,8 @@ export class DummyGateway
   server: Server;
 
   constructor() {}
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async afterInit(server: Server) {
-    console.log("WebSocket Gateway initialized!");
+  async afterInit() {
+    console.log("AI Websocket Gateway initialized!");
   }
 
   async handleConnection(client: Socket) {

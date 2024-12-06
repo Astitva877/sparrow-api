@@ -14,6 +14,7 @@ import { LoggerModule } from "nestjs-pino";
 import pino from "pino";
 import { APP_FILTER } from "@nestjs/core";
 import { LoggingExceptionsFilter } from "../common/exception/logging.exception-filter";
+import { ProxyModule } from "../proxy/proxy.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { LoggingExceptionsFilter } from "../common/exception/logging.exception-f
     IdentityModule,
     WorkspaceModule,
     CommonModule,
+    ProxyModule,
   ],
   controllers: [AppController],
   providers: [
