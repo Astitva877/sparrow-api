@@ -113,9 +113,8 @@ export class EnvironmentController {
     @Param("workspaceId") workspaceId: string,
     @Res() res: FastifyReply,
   ) {
-    const environment = await this.environmentService.getAllEnvironments(
-      workspaceId,
-    );
+    const environment =
+      await this.environmentService.getAllEnvironments(workspaceId);
     const responseData = new ApiResponseService(
       "Success",
       HttpStatusCode.OK,
@@ -143,9 +142,8 @@ export class EnvironmentController {
       workspaceId,
     );
 
-    const environment = await this.environmentService.getEnvironment(
-      environmentId,
-    );
+    const environment =
+      await this.environmentService.getEnvironment(environmentId);
     await this.workspaceService.updateEnvironmentInWorkSpace(
       workspaceId,
       environmentId,

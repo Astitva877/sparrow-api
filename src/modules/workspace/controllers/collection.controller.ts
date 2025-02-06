@@ -67,9 +67,8 @@ export class collectionController {
     @Res() res: FastifyReply,
   ) {
     const workspaceId = createCollectionDto.workspaceId;
-    const data = await this.collectionService.createCollection(
-      createCollectionDto,
-    );
+    const data =
+      await this.collectionService.createCollection(createCollectionDto);
     const collection = await this.collectionService.getCollection(
       data.insertedId.toString(),
     );
@@ -99,9 +98,8 @@ export class collectionController {
     @Param("workspaceId") workspaceId: string,
     @Res() res: FastifyReply,
   ) {
-    const collection = await this.collectionService.getAllCollections(
-      workspaceId,
-    );
+    const collection =
+      await this.collectionService.getAllCollections(workspaceId);
     const responseData = new ApiResponseService(
       "Success",
       HttpStatusCode.OK,
@@ -273,9 +271,8 @@ export class collectionController {
       requestDto.workspaceId,
     );
     await this.collectionRequestService.checkPermission(workspaceId, user._id);
-    const noOfRequests = await this.collectionRequestService.getNoOfRequest(
-      collectionId,
-    );
+    const noOfRequests =
+      await this.collectionRequestService.getNoOfRequest(collectionId);
     const requestObj = await this.collectionRequestService.addRequest(
       collectionId,
       requestDto,
@@ -345,9 +342,8 @@ export class collectionController {
     );
     const user = await this.contextService.get("user");
     await this.collectionRequestService.checkPermission(workspaceId, user._id);
-    const noOfRequests = await this.collectionRequestService.getNoOfRequest(
-      collectionId,
-    );
+    const noOfRequests =
+      await this.collectionRequestService.getNoOfRequest(collectionId);
     await this.collectionRequestService.deleteRequest(
       collectionId,
       requestId,
@@ -406,9 +402,8 @@ export class collectionController {
     @Body() websocketDto: Partial<CollectionWebSocketDto>,
     @Res() res: FastifyReply,
   ) {
-    const websocketObj = await this.collectionRequestService.addWebSocket(
-      websocketDto,
-    );
+    const websocketObj =
+      await this.collectionRequestService.addWebSocket(websocketDto);
     const responseData = new ApiResponseService(
       "Success",
       HttpStatusCode.OK,
@@ -549,9 +544,8 @@ export class collectionController {
     @Body() socketioDto: Partial<CollectionSocketIODto>,
     @Res() res: FastifyReply,
   ) {
-    const socketioObj = await this.collectionRequestService.addSocketIO(
-      socketioDto,
-    );
+    const socketioObj =
+      await this.collectionRequestService.addSocketIO(socketioDto);
     const responseData = new ApiResponseService(
       "Success",
       HttpStatusCode.OK,
@@ -649,9 +643,8 @@ export class collectionController {
     @Body() graphqlDto: Partial<CollectionGraphQLDto>,
     @Res() res: FastifyReply,
   ) {
-    const graphqlObj = await this.collectionRequestService.addGraphQL(
-      graphqlDto,
-    );
+    const graphqlObj =
+      await this.collectionRequestService.addGraphQL(graphqlDto);
     const responseData = new ApiResponseService(
       "Success",
       HttpStatusCode.OK,

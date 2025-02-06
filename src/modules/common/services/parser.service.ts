@@ -113,9 +113,8 @@ export class ParserService {
       };
     }
 
-    const newCollection = await this.collectionService.importCollection(
-      collection,
-    );
+    const newCollection =
+      await this.collectionService.importCollection(collection);
     const collectionDetails = await this.collectionService.getCollection(
       newCollection.insertedId.toString(),
     );
@@ -210,9 +209,8 @@ export class ParserService {
         name: user.name,
       },
     };
-    const insertedCollection = await this.collectionService.importCollection(
-      collection,
-    );
+    const insertedCollection =
+      await this.collectionService.importCollection(collection);
     const collectionId = insertedCollection.insertedId.toString();
     const branch = await this.branchService.createBranch({
       name: currentBranch,

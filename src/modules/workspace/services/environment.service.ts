@@ -78,9 +78,8 @@ export class EnvironmentService {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      const environment = await this.environmentRepository.addEnvironment(
-        newEnvironment,
-      );
+      const environment =
+        await this.environmentRepository.addEnvironment(newEnvironment);
       return environment;
     } catch (error) {
       throw new BadRequestException(error);

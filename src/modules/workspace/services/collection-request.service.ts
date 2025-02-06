@@ -278,9 +278,8 @@ export class CollectionRequestService {
     folderId?: string,
   ): Promise<CollectionItem> {
     const uuid = uuidv4();
-    const collection = await this.collectionReposistory.getCollection(
-      collectionId,
-    );
+    const collection =
+      await this.collectionReposistory.getCollection(collectionId);
     const requestObj: CollectionItem = {
       id: uuid,
       name: request.items.name,
@@ -364,9 +363,8 @@ export class CollectionRequestService {
     requestId: string,
     request: Partial<CollectionRequestDto>,
   ): Promise<CollectionRequestItem> {
-    const collectionData = await this.collectionReposistory.getCollection(
-      collectionId,
-    );
+    const collectionData =
+      await this.collectionReposistory.getCollection(collectionId);
     const requestData = await this.findItemById(
       collectionData.items,
       requestId,
@@ -429,9 +427,8 @@ export class CollectionRequestService {
     noOfRequests: number,
     requestDto: Partial<CollectionRequestDto>,
   ): Promise<UpdateResult<Collection>> {
-    const collectionData = await this.collectionReposistory.getCollection(
-      collectionId,
-    );
+    const collectionData =
+      await this.collectionReposistory.getCollection(collectionId);
     const requestData = await this.findItemById(
       collectionData.items,
       requestId,

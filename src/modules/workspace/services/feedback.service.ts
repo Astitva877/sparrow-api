@@ -102,9 +102,8 @@ export class FeedbackService {
     };
 
     // Insert the feedback into the database
-    const response = await this.feedbackRepository.addFeedback(
-      uploadFeedbackParams,
-    );
+    const response =
+      await this.feedbackRepository.addFeedback(uploadFeedbackParams);
     return response;
   }
 

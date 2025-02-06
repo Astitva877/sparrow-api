@@ -60,9 +60,8 @@ export class CollectionService {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    const collection = await this.collectionRepository.addCollection(
-      newCollection,
-    );
+    const collection =
+      await this.collectionRepository.addCollection(newCollection);
     const updateMessage = `New Collection "${createCollectionDto.name}" is added in "${workspace.name}" workspace`;
     await this.producerService.produce(TOPIC.UPDATES_ADDED_TOPIC, {
       value: JSON.stringify({
@@ -86,9 +85,8 @@ export class CollectionService {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    const collection = await this.collectionRepository.addCollection(
-      newCollection,
-    );
+    const collection =
+      await this.collectionRepository.addCollection(newCollection);
     return collection;
   }
 
@@ -148,9 +146,8 @@ export class CollectionService {
     updateCollectionDto: Partial<UpdateCollectionDto>,
     workspaceId: string,
   ): Promise<UpdateResult> {
-    const workspace = await this.workspaceService.IsWorkspaceAdminOrEditor(
-      workspaceId,
-    );
+    const workspace =
+      await this.workspaceService.IsWorkspaceAdminOrEditor(workspaceId);
     const user = await this.contextService.get("user");
     await this.checkPermission(workspaceId, user._id);
     const collection = await this.collectionRepository.get(collectionId);
@@ -201,9 +198,8 @@ export class CollectionService {
     id: string,
     workspaceId: string,
   ): Promise<DeleteResult> {
-    const workspace = await this.workspaceService.IsWorkspaceAdminOrEditor(
-      workspaceId,
-    );
+    const workspace =
+      await this.workspaceService.IsWorkspaceAdminOrEditor(workspaceId);
     const user = await this.contextService.get("user");
     await this.checkPermission(workspaceId, user._id);
     const collection = await this.getCollection(id);

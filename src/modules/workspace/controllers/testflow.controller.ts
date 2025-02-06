@@ -78,9 +78,8 @@ export class TestflowController {
     @Body() createTestflowDto: CreateTestflowDto,
     @Res() res: FastifyReply,
   ) {
-    const testflow = await this.testflowService.createTestflow(
-      createTestflowDto,
-    );
+    const testflow =
+      await this.testflowService.createTestflow(createTestflowDto);
     const responseData = new ApiResponseService(
       "Testflow Created",
       HttpStatusCode.CREATED,
