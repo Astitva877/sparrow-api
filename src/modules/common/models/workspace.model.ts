@@ -72,6 +72,10 @@ export class TeamInfoDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsOptional()
+  hubUrl?: string;
 }
 
 export class Workspace {

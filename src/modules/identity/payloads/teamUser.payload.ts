@@ -81,7 +81,7 @@ export class AddTeamUserDto {
 
   @IsArray()
   @ApiProperty({ example: ["user@gmail.com"] })
-  users: string;
+  users: string[];
 
   @IsString()
   @IsNotEmpty()

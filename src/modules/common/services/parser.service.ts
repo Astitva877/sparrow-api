@@ -47,7 +47,8 @@ export class ParserService {
   }> {
     let openApiDocument = (await SwaggerParser.parse(file)) as
       | OpenAPI303
-      | OpenAPI20;
+      | OpenAPI20
+      | any;
     let folderObjMap = new Map();
     const user = await this.contextService.get("user");
     if (openApiDocument.hasOwnProperty("components")) {
@@ -103,8 +104,8 @@ export class ParserService {
         totalRequests,
         items: items,
         uuid: openApiDocument.info.title,
-        activeSync: false,
-        activeSyncUrl: "",
+        activeSync: openApiDocument?.isActiveSyncEnabled ?? false,
+        activeSyncUrl: openApiDocument?.activeSyncUrl ?? "",
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: user._id,
@@ -391,5 +392,62 @@ export class ParserService {
     });
 
     return mergedArray;
+  }
+
+  async parseOAPICollection(file: string): Promise<Collection> {
+    let openApiDocument = (await SwaggerParser.parse(file)) as
+      | OpenAPI303
+      | OpenAPI20
+      | any;
+    let folderObjMap = new Map();
+    const user = await this.contextService.get("user");
+    if (openApiDocument.hasOwnProperty("components")) {
+      openApiDocument = resolveAllRefs(openApiDocument) as OpenAPI303;
+      folderObjMap = oapi3Transformer.createCollectionItems(
+        openApiDocument,
+        user,
+      );
+    } else if (openApiDocument.hasOwnProperty("definitions")) {
+      openApiDocument = resolveAllRefs(openApiDocument) as OpenAPI20;
+      folderObjMap = oapi2Transformer.createCollectionItems(
+        openApiDocument,
+        user,
+      );
+    }
+    const itemObject = Object.fromEntries(folderObjMap);
+    const items: CollectionItem[] = [];
+    let totalRequests = 0;
+    for (const key in itemObject) {
+      if (itemObject.hasOwnProperty(key)) {
+        items.push(itemObject[key]);
+        delete itemObject[key];
+      }
+    }
+    items.map((itemObj) => {
+      totalRequests = totalRequests + itemObj.items?.length;
+    });
+
+    const collection: Collection = {
+      name: openApiDocument.info.title,
+      description: openApiDocument.info.description,
+      selectedAuthType: CollectionAuthModeEnum["No Auth"],
+      primaryBranch: "",
+      localRepositoryPath: "",
+      branches: [],
+      totalRequests,
+      items: items,
+      uuid: openApiDocument.info.title,
+      activeSync: openApiDocument?.isActiveSyncEnabled ?? false,
+      activeSyncUrl: openApiDocument?.activeSyncUrl ?? "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: user._id,
+      updatedBy: {
+        id: user._id,
+        name: user.name,
+      },
+    };
+
+    return collection;
   }
 }

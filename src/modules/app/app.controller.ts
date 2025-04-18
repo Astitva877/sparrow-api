@@ -7,6 +7,7 @@ import {
   Post,
   Req,
   Res,
+  UseGuards,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -24,6 +25,7 @@ import { HttpStatusCode } from "../common/enum/httpStatusCode.enum";
 import { curlDto } from "./payloads/curl.payload";
 import { PostmanParserService } from "../common/services/postman.parser.service";
 import { subscribePayload } from "./payloads/subscribe.payload";
+import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 /**
  * App Controller
  */
@@ -234,5 +236,31 @@ export class AppController {
       data,
     };
     return res.status(HttpStatus.OK).send(responseData);
+  }
+
+  @Post("parse-collection")
+  @ApiOperation({
+    summary: "Parse as OAPI JSON into Collection",
+    description:
+      "You can parse a OAPI JSON into collection format of sparrow collection.",
+  })
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    status: 201,
+    description: "Parsed json Successfull",
+  })
+  @ApiResponse({ status: 400, description: "Failed to parsed Collection" })
+  async importJsonCollection(
+    @Res() res: FastifyReply,
+    @Body() jsonObj: string,
+  ) {
+    const collectionObj = await this.parserService.parseOAPICollection(jsonObj);
+
+    const responseData = new ApiResponseService(
+      "Collection Parsed",
+      HttpStatusCode.OK,
+      collectionObj,
+    );
+    return res.status(responseData.httpStatusCode).send(responseData);
   }
 }

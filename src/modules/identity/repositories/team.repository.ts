@@ -86,6 +86,19 @@ export class TeamRepository {
   }
 
   /**
+   * Fetches a team from database by UUID
+   * @param {string} id
+   * @returns {Promise<Team>} queried team data
+   */
+  async getTeams(): Promise<WithId<Team>[]> {
+    const teams = await this.db
+      .collection<Team>(Collections.TEAM)
+      .find()
+      .toArray();
+    return teams;
+  }
+
+  /**
    * Updates a team name
    * @param {string} id
    * @returns {Promise<ITeam>} mutated team data
@@ -156,5 +169,23 @@ export class TeamRepository {
         },
       },
     });
+  }
+
+  async isTeamNameAvailable(name: string): Promise<boolean> {
+    const team = await this.db
+      .collection<Team>(Collections.TEAM)
+      .findOne({ name: name });
+
+    return !team; // true if not found (available), false if found (already exists)
+  }
+
+  async existingHubUrls(regexPattern: string) {
+    // Fetch all matching URLs (e.g., https://techdome.sparrowhub.net, https://techdome1.sparrowhub.net, etc.)
+    const existingTeams = await this.db
+      .collection<Team>(Collections.TEAM)
+      .find({ hubUrl: { $regex: regexPattern, $options: "i" } })
+      .project({ hubUrl: 1 }) // only fetch hubUrl field
+      .toArray();
+    return existingTeams;
   }
 }

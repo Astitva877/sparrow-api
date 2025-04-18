@@ -35,6 +35,7 @@ import {
 import { CreateEnvironmentDto } from "../payloads/environment.payload";
 import { EnvironmentService } from "./environment.service";
 import { TeamService } from "@src/modules/identity/services/team.service";
+import { TeamUserService } from "@src/modules/identity/services/team-user.service";
 import {
   AddUserInWorkspaceDto,
   AddUsersWithRolesInWorkspaceDto,
@@ -65,6 +66,7 @@ export class WorkspaceService {
     private readonly teamRepository: TeamRepository,
     private readonly environmentService: EnvironmentService,
     private readonly userRepository: UserRepository,
+    private readonly teamUserService: TeamUserService,
     private readonly teamService: TeamService,
     private readonly configService: ConfigService,
     private readonly producerService: ProducerService,
@@ -279,6 +281,7 @@ export class WorkspaceService {
       team: {
         id: teamData._id.toString(),
         name: teamData.name,
+        hubUrl: teamData?.hubUrl || "",
       },
       users: usersInfo,
       admins: adminInfo,
@@ -331,7 +334,7 @@ export class WorkspaceService {
       );
     }
     await Promise.all(userDataPromises);
-    const updateMessage = `New workspace "${workspaceData.name}" is created under "${teamData.name}" team`;
+    const updateMessage = `New workspace "${workspaceData.name}" is created under "${teamData.name}" hub`;
     await this.producerService.produce(TOPIC.UPDATES_ADDED_TOPIC, {
       value: JSON.stringify({
         message: updateMessage,
@@ -344,7 +347,7 @@ export class WorkspaceService {
 
     if (!workspaceData?.firstWorkspace) {
       await this.newWorkspaceEmail(
-        userDetails.name,
+        userDetails.name.split(" ")[0],
         workspaceData.name,
         teamData.name,
         userDetails.email,
@@ -695,6 +698,19 @@ export class WorkspaceService {
       },
       payload.role,
     );
+
+    await this.teamUserService.sendInvite({
+      teamId: workspaceData.team.id,
+      users: usersNotExist,
+      role: payload.role,
+      workspaces: [
+        {
+          id: workspaceData._id.toString(),
+          name: workspaceData.name,
+        },
+      ],
+    });
+
     const response = {
       notExistInTeam: usersNotExist,
       existInWorkspace: alreadyWorkspaceMember,
@@ -881,7 +897,7 @@ export class WorkspaceService {
           "support.sparrowWebsiteName",
         ),
       },
-      subject: `Workspace Update: New Workspace is created under ${teamName} team.`,
+      subject: `Workspace Update: New Workspace is created under ${teamName} hub.`,
     };
 
     const promise = [this.emailService.sendEmail(transporter, mailOptions)];

@@ -20,6 +20,7 @@ import { ContextService } from "@src/modules/common/services/context.service";
 import { MemoryStorageFile } from "@blazity/nest-file-fastify";
 import { TeamRole } from "@src/modules/common/enum/roles.enum";
 import { User } from "@src/modules/common/models/user.model";
+import { UserInvitesRepository } from "../repositories/userInvites.repository";
 
 /**
  * Team Service
@@ -30,6 +31,7 @@ export class TeamService {
     private readonly teamRepository: TeamRepository,
     private readonly producerService: ProducerService,
     private readonly configService: ConfigService,
+    private readonly userInvitesRepository: UserInvitesRepository,
     private readonly userRepository: UserRepository,
     private readonly contextService: ContextService,
   ) {}
@@ -39,6 +41,45 @@ export class TeamService {
       return true;
     }
     throw new BadRequestException("Image size should be less than 2MB");
+  }
+
+  private sanitizeName(name: string): string {
+    return name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-") // replace special chars and spaces with '-'
+      .replace(/^-+|-+$/g, ""); // trim leading/trailing dashes
+  }
+
+  async generateUniqueTeamUrl(name: string): Promise<string> {
+    const prefix = "https://";
+    const suffix = ".sparrowhub.net";
+    // const envPath =
+    //   this.configService.get("app.env") === Env.PROD ? "/release/v1" : "/dev";
+    let base = this.sanitizeName(name);
+    if (base.length > 50) {
+      base = base.slice(0, 50);
+    }
+    const baseUrl = `${prefix}${base}`;
+
+    const regexPattern = `^${baseUrl}\\d*${suffix}$`;
+    const existingHubs =
+      await this.teamRepository.existingHubUrls(regexPattern);
+    const existingUrls = new Set(existingHubs.map((hub) => hub.hubUrl));
+
+    const finalUrl = `${baseUrl}${suffix}`;
+
+    if (!existingUrls.has(finalUrl)) {
+      return finalUrl;
+    }
+
+    // Find next available suffix
+    let counter = 1;
+    while (existingUrls.has(`${baseUrl}${counter}${suffix}`)) {
+      counter++;
+    }
+
+    return `${baseUrl}${counter}${suffix}`;
   }
 
   /**
@@ -51,6 +92,8 @@ export class TeamService {
     image?: MemoryStorageFile,
   ): Promise<InsertOneResult<Team>> {
     let team;
+
+    const dynamicUrl = await this.generateUniqueTeamUrl(teamData.name);
     if (image) {
       await this.isImageSizeValid(image.size);
       const dataBuffer = image.buffer;
@@ -61,15 +104,18 @@ export class TeamService {
         mimetype: image.mimetype,
         size: image.size,
       };
+
       team = {
         name: teamData.name,
         description: teamData.description ?? "",
         logo: logo,
+        hubUrl: dynamicUrl,
       };
     } else {
       team = {
         name: teamData.name,
         description: teamData.description ?? "",
+        hubUrl: dynamicUrl,
       };
     }
     const createdTeam = await this.teamRepository.create(team);
@@ -111,6 +157,11 @@ export class TeamService {
    */
   async get(id: string): Promise<WithId<Team>> {
     const data = await this.teamRepository.get(id);
+    data?.invites?.forEach((invite) => {
+      delete invite.inviteId;
+      delete invite.isAccepted;
+      delete invite.workspaces;
+    });
     return data;
   }
 
@@ -208,7 +259,38 @@ export class TeamService {
 
       teams.push(teamData);
     }
+    const existingTeams = await this.userInvitesRepository.getByEmail(
+      user.email,
+    );
+    const teamIds = existingTeams?.teamIds || [];
+    if (teamIds) {
+      for (const teamId of teamIds) {
+        const teamData: WithId<TeamWithNewInviteTag> = await this.get(teamId);
+        // Find the invite that matches the user's email (or another criterion)
+        const specificInvite = teamData.invites.find(
+          (invite) => invite.email === user.email,
+        );
+        let createdById = null;
+        if (specificInvite) {
+          createdById = specificInvite.createdBy.toString();
+        }
+        const senderData = await this.userRepository.getUserById(createdById);
+        const team: any = {
+          _id: teamId,
+          logo: teamData.logo,
+          name: teamData.name,
+          hubUrl: teamData.hubUrl,
+          description: senderData.name || "No creator found",
+        };
+        // Add the team object to the teams array
+        teams.push(team);
+      }
+    }
     return teams;
+  }
+
+  async getTeams(): Promise<WithId<Team>[]> {
+    return await this.teamRepository.getTeams();
   }
 
   async isTeamOwner(id: string): Promise<boolean> {

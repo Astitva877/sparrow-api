@@ -1,8 +1,10 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
   IsArray,
   IsBoolean,
   IsDate,
+  IsEnum,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
@@ -10,6 +12,114 @@ import {
   IsString,
   ValidateNested,
 } from "class-validator";
+import { Auth, KeyValue, SparrowRequestBody } from "./collection.rxdb.model";
+import { AuthModeEnum, BodyModeEnum } from "./collection.model";
+import { HTTPMethods } from "fastify";
+
+export class RequestMetaData {
+  @ApiProperty({ example: "put" })
+  @IsNotEmpty()
+  method: HTTPMethods;
+
+  @ApiProperty({ example: "pet" })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ example: "updatePet" })
+  @IsString()
+  @IsOptional()
+  operationId?: string;
+
+  @ApiProperty({ example: "/pet" })
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+
+  @ApiProperty({ type: [SparrowRequestBody] })
+  @Type(() => SparrowRequestBody)
+  @ValidateNested({ each: true })
+  @IsOptional()
+  body?: SparrowRequestBody;
+
+  @ApiProperty({
+    enum: [
+      "application/json",
+      "application/xml",
+      "application/x-www-form-urlencoded",
+      "multipart/form-data",
+      "application/javascript",
+      "text/plain",
+      "text/html",
+    ],
+  })
+  @IsEnum({ BodyModeEnum })
+  @IsString()
+  @IsOptional()
+  selectedRequestBodyType?: BodyModeEnum;
+
+  @ApiProperty({
+    enum: AuthModeEnum,
+  })
+  @IsEnum({ AuthModeEnum })
+  @IsString()
+  @IsNotEmpty()
+  selectedRequestAuthType?: AuthModeEnum;
+
+  @ApiProperty({
+    example: {
+      name: "search",
+      description: "The search term to filter results",
+      required: false,
+      schema: {},
+    },
+  })
+  @IsArray()
+  @Type(() => KeyValue)
+  @ValidateNested({ each: true })
+  @IsOptional()
+  queryParams?: KeyValue[];
+
+  @ApiProperty({
+    type: [KeyValue],
+    example: {
+      name: "userID",
+      description: "The unique identifier of the user",
+      required: true,
+      schema: {},
+    },
+  })
+  @IsArray()
+  @Type(() => KeyValue)
+  @ValidateNested({ each: true })
+  @IsOptional()
+  pathParams?: KeyValue[];
+
+  @ApiProperty({
+    type: [KeyValue],
+    example: {
+      name: "Authorization",
+      description: "Bearer token for authentication",
+    },
+  })
+  @IsArray()
+  @Type(() => KeyValue)
+  @ValidateNested({ each: true })
+  @IsOptional()
+  headers?: KeyValue[];
+
+  @ApiProperty({
+    type: [Auth],
+    example: {
+      bearerToken: "Bearer xyz",
+    },
+  })
+  @IsArray()
+  @Type(() => Auth)
+  @ValidateNested({ each: true })
+  @IsOptional()
+  auth?: Auth;
+}
 
 /**
  * Represents the edges of a Testflow which tell the connection between nodes.
@@ -47,6 +157,10 @@ export class NodePosition {
 export class NodeData {
   @IsString()
   @IsNotEmpty()
+  blockName: string;
+
+  @IsString()
+  @IsNotEmpty()
   @IsOptional()
   requestId?: string;
 
@@ -59,6 +173,15 @@ export class NodeData {
   @IsNotEmpty()
   @IsOptional()
   collectionId?: string;
+
+  @ApiProperty({ type: RequestMetaData })
+  @IsOptional()
+  @Type(() => RequestMetaData)
+  requestData?: RequestMetaData;
+
+  @IsOptional()
+  @IsBoolean()
+  isDeleted?: boolean = false;
 }
 
 /**

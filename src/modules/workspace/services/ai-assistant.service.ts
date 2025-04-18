@@ -327,199 +327,21 @@ export class AiAssistantService {
    * @returns A promise that resolves with the generated text, thread ID, and message ID.
    * @throws BadRequestException if the assistant cannot be created.
    */
-  public async generateTextChatBotOld(
-    data: ChatBotPayload,
-    client: Socket,
-  ): Promise<void> {
-    try {
-      const parsedData = typeof data === "string" ? JSON.parse(data) : data;
-      const text = parsedData.userInput;
-      let threadId = parsedData.threadId;
-      const tabId = parsedData.tabId;
-      const emailId = parsedData.emailId;
-      const apiData = parsedData.apiData || "Data not available";
-
-      const user = await this.userService.getUserByEmail(emailId);
-      const stat = await this.chatbotStatsService.getIndividualStat(
-        user?._id?.toString(),
-      );
-      const currentYearMonth = this.chatbotStatsService.getCurrentYearMonth();
-      if (
-        stat?.tokenStats &&
-        stat.tokenStats?.yearMonth === currentYearMonth &&
-        stat.tokenStats.tokenUsage > (this.monthlyTokenLimit || 0)
-      ) {
-        client.emit(`assistant-response_${tabId}`, {
-          messages: "Limit Reached. Can you please try again after some time.",
-        });
-        throw new BadRequestException("Limit reached");
-      }
-
-      // Validate payload
-      if (!text) {
-        throw new BadRequestException(
-          "Invalid input: 'text' field is required.",
-        );
-      }
-
-      if (!this.assistantsClient) {
-        throw new InternalServerErrorException(
-          "AI assistant client is not initialized.",
-        );
-      }
-
-      const runAssistant = async () => {
-        try {
-          if (!threadId) {
-            console.log("Creating a new thread");
-            const assistantThread =
-              await this.assistantsClient.beta.threads.create({});
-            threadId = assistantThread.id;
-          }
-
-          await this.assistantsClient.beta.threads.messages.create(threadId, {
-            role: "user",
-            content: `{Text: ${text} , API data: ${apiData} }`,
-          });
-
-          const assistantResponse =
-            await this.assistantsClient.beta.assistants.retrieve(
-              this.assistantId,
-            );
-          const runResponse =
-            await this.assistantsClient.beta.threads.runs.create(threadId, {
-              assistant_id: assistantResponse.id,
-            });
-
-          let runStatus = runResponse.status;
-          while (runStatus === "queued" || runStatus === "in_progress") {
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-            const runStatusResponse =
-              await this.assistantsClient.beta.threads.runs.retrieve(
-                threadId,
-                runResponse.id,
-              );
-            runStatus = runStatusResponse.status;
-          }
-
-          if (runStatus === "completed") {
-            const messagesResponse =
-              await this.assistantsClient.beta.threads.messages.list(threadId);
-
-            const completedRun =
-              await this.assistantsClient.beta.threads.runs.retrieve(
-                threadId,
-                runResponse.id,
-              );
-            const tokenUsage = completedRun.usage || {
-              prompt_tokens: 0,
-              completion_tokens: 0,
-              total_tokens: 0,
-            };
-
-            const latestAssistantMessage = messagesResponse.data
-              .filter((message) => message.role === "assistant")
-              .sort(
-                (a, b) =>
-                  new Date(b.created_at).getTime() -
-                  new Date(a.created_at).getTime(),
-              )[0];
-
-            const assistantReply = latestAssistantMessage.content
-              .filter((item) => item.type === "text")
-              .map((item) => item.text.value)
-              .join(" ");
-
-            client.emit(`assistant-response_${tabId}`, {
-              messages: assistantReply,
-              thread_Id: threadId,
-            });
-
-            const id = user._id.toString();
-
-            const kafkaMessage = {
-              userId: id,
-              tokenCount: tokenUsage,
-            };
-            await this.producerService.produce(
-              TOPIC.AI_RESPONSE_GENERATED_TOPIC,
-              {
-                value: JSON.stringify(kafkaMessage),
-              },
-            );
-          } else {
-            console.error(
-              `Run status is ${runStatus}, unable to fetch messages.`,
-            );
-            throw new InternalServerErrorException(
-              "Assistant could not complete the request.",
-            );
-          }
-        } catch (error) {
-          client.emit(`assistant-response_${tabId}`, {
-            messages:
-              "Some Issue Occurred in Processing your Request. Please try again",
-            thread_Id: threadId,
-          });
-        }
-      };
-
-      runAssistant();
-    } catch (error) {
-      client.emit("assistant-response", {
-        messages: "Please try again",
-        thread_Id: null,
-      });
-    }
-  }
-
-  public async specificError(text: ErrorResponsePayload): Promise<string> {
-    try {
-      if (!text) {
-        throw new BadRequestException(
-          "Invalid input: 'text' field is required.",
-        );
-      }
-
-      const curl = text.curl;
-      const error = text.error;
-
-      const prompt =
-        "You are provided with two things. One is cURL and second is the error message. You need to provide the solution for the error message.";
-
-      const userMessage = `This is the cURL: ${curl} and this is the Error: ${error}`;
-
-      const messages: { role: "system" | "user"; content: string }[] = [
-        { role: "system", content: prompt },
-        { role: "user", content: userMessage },
-      ];
-
-      const response = await this.assistantsClient.chat.completions.create({
-        model: "sparrow",
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 1024,
-      });
-
-      const result =
-        response.choices[response.choices.length - 1].message.content.trim();
-      return result;
-    } catch (error) {
-      console.error("Error processing specificError:", error);
-      throw new InternalServerErrorException(
-        "An error occurred while processing the request.",
-      );
-    }
-  }
-
+  
   public async generateTextChatBot(client: WebSocket): Promise<void> {
     try {
 
       while (client.readyState === WebSocket.OPEN) {
 
         // Receive message from the client
-        const message = await this.receiveMessage(client);
-
+        const message: string = await new Promise((resolve) => {
+          const onMessage = (event: MessageEvent) => {
+            resolve(event.data.toString("utf-8"));
+            client.removeEventListener("message", onMessage);
+          };
+          client.addEventListener("message", onMessage);
+        });
+  
         let parsedData: ChatBotPayload;
         try {
           parsedData = JSON.parse(message);
@@ -547,8 +369,10 @@ export class AiAssistantService {
         ) {
           client.send(JSON.stringify({
             messages: "Limit Reached. Please try again later.",
+            thread_Id: threadId,
+            tab_id: tabId,
           }));
-          throw new BadRequestException("Limit reached");
+          continue;
         }
         
         // Validate user input
@@ -564,75 +388,118 @@ export class AiAssistantService {
           const assistantThread = await this.assistantsClient.beta.threads.create({});
           threadId = assistantThread.id;
         }
-
-        // Run Assistant Logic
-        const assistantReply = await this.runAssistant(client, text, apiData, threadId, tabId);
-
-        // Send AI Response back to the client
+  
+        await this.assistantsClient.beta.threads.messages.create(threadId, {
+          role: "user",
+          content: `{Text: ${text}, API data: ${apiData}}`,
+        });
+  
         client.send(JSON.stringify({
-          messages: assistantReply,
+          messages: "",
           thread_Id: threadId,
-          tab_id: tabId
+          tab_id: tabId,
+          stream_status: "start",
         }));
+
+        this.assistantsClient.beta.threads.runs.stream(threadId, {
+          assistant_id: this.assistantId,
+        })
+        .on('textDelta', (textDelta) => {
+          const chunk = textDelta.value;
+  
+          // Send the chunk to the client at the same time (Streaming the Response)
+          client.send(JSON.stringify({
+            messages: chunk,
+            thread_Id: threadId,
+            tab_id: tabId,
+            stream_status: "streaming",
+          }));
+        })
+        .on('end', async () => {
+          try {
+            client.send(JSON.stringify({
+              messages: "",
+              thread_Id: threadId,
+              tab_id: tabId,
+              stream_status: "end",
+            }));
+            // Get latest run for Token Usage
+            const runsList = await this.assistantsClient.beta.threads.runs.list(threadId);
+            const latestRun = runsList.data[0];
+  
+            if (latestRun?.usage) {
+              const tokenUsage = latestRun.usage.total_tokens;
+  
+              const kafkaMessage = {
+                userId: user._id.toString(),
+                tokenCount: tokenUsage,
+              };
+  
+              await this.producerService.produce(
+                TOPIC.AI_RESPONSE_GENERATED_TOPIC,
+                {
+                  value: JSON.stringify(kafkaMessage),
+                },
+              );
+            } else {
+              console.warn("Run usage not yet available.");
+            }
+          } catch (err) {
+            console.error("Error handling usage after stream:", err);
+          }
+        })
+        .on('error', (error) => {
+          client.send(JSON.stringify({
+            messages: "Some issue occurred while processing your request. Please try again.",
+            thread_Id: threadId,
+            tab_id: tabId,
+          }));
+        });
       }
     } catch (error) {
       console.error("Error in WebSocket loop:", error);
-      client.send(JSON.stringify({ event: "error", message: "An error occurred." }));
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ event: "error", message: "Some Issue Occurred in Processing your Request. Please try again" }));
+      }
     }
   }
 
-  private receiveMessage(client: WebSocket): Promise<string> {
-    return new Promise((resolve) => {
-      const onMessage = (event: MessageEvent) => {
-        resolve(event.data.toString("utf-8"));
-        client.removeEventListener("message", onMessage);
-      };
-      client.addEventListener("message", onMessage);
-    });
-  }
-  
-  private async runAssistant(client: WebSocket, text: string, apiData: string, threadId: string | undefined, tabId: string) {
+  public async specificError(text: ErrorResponsePayload): Promise<string> {
     try {
-
-      // Send user message to AI
-      await this.assistantsClient.beta.threads.messages.create(threadId, {
-        role: "user",
-        content: `{Text: ${text}, API data: ${apiData}}`,
-      });
-
-      // Retrieve assistant response
-      const assistantResponse = await this.assistantsClient.beta.assistants.retrieve(this.assistantId);
-      const runResponse = await this.assistantsClient.beta.threads.runs.create(threadId, {
-        assistant_id: assistantResponse.id,
-      });
-
-      // Wait for assistant response
-      let runStatus = runResponse.status;
-      while (runStatus === "queued" || runStatus === "in_progress") {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        const runStatusResponse = await this.assistantsClient.beta.threads.runs.retrieve(threadId, runResponse.id);
-        runStatus = runStatusResponse.status;
+      if (!text) {
+        throw new BadRequestException(
+          "Invalid input: 'text' field is required.",
+        );
       }
-
-      // Process AI response
-      if (runStatus === "completed") {
-        const messagesResponse = await this.assistantsClient.beta.threads.messages.list(threadId);
-        const latestAssistantMessage = messagesResponse.data
-          .filter((message) => message.role === "assistant")
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-
-        return latestAssistantMessage.content
-          .filter((item) => item.type === "text")
-          .map((item) => item.text.value)
-          .join(" ");
-      } else {
-        console.error(`Run status is ${runStatus}, unable to fetch messages.`);
-        throw new InternalServerErrorException("Assistant could not complete the request.");
-      }
+      
+      const curl = text.curl;
+      const error = text.error;
+      
+      const prompt =
+      "You are provided with two things. One is cURL and second is the error message. You need to provide the solution for the error message.";
+      
+      const userMessage = `This is the cURL: ${curl} and this is the Error: ${error}`;
+      
+      const messages: { role: "system" | "user"; content: string }[] = [
+        { role: "system", content: prompt },
+        { role: "user", content: userMessage },
+      ];
+      
+      const response = await this.assistantsClient.chat.completions.create({
+        model: "sparrow",
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: this.maxTokens,
+      });
+      
+      const result =
+      response.choices[response.choices.length - 1].message.content.trim();
+      return result;
     } catch (error) {
-      console.error("Error in AI Assistant:", error);
-      return "An error occurred while processing your request. Please try again.";
+      console.error("Error processing specificError:", error);
+      throw new BadRequestException(
+        "An error occurred while processing the request.",
+      );
     }
-  }
-
+  } 
 }

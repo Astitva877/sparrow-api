@@ -9,7 +9,7 @@ export default () => ({
     jwtExpirationTime: parseInt(process.env.JWT_EXPIRATION_TIME) || 1800,
     defaultWorkspaceName: "My Workspace",
     userBlacklistPrefix: "BL_",
-    defaultTeamNameSuffix: "'s Team",
+    defaultTeamNameSuffix: "'s Hub",
     imageSizeLimit: 2097152, // value in byte
     deletedAPILimitInDays: 7,
     timeToDaysDivisor: 86400000,
@@ -66,6 +66,12 @@ export default () => ({
     sparrowEmail: process.env.SPARROW_EMAIL,
     sparrowWebsite: "https://sparrowapp.dev",
     sparrowWebsiteName: "www.sparrowapp.dev",
+  },
+  auth: {
+    baseURL: process.env.AUTH_BASE_URL,
+  },
+  marketing: {
+    baseURL: process.env.MARKETING_BASE_URL,
   },
   social: {
     linkedinUrl: "https://www.linkedin.com/showcase/sparrow-app/",

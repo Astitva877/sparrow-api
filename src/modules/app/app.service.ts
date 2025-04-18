@@ -108,6 +108,25 @@ export class AppService {
     return curlCommand;
   }
 
+  /**
+   * Fallback function to extract query parameters from a given URL.
+   *
+   * This method manually parses the URL and returns a key-value map of query parameters.
+   * It is primarily used when curlconverter fails to extract the query string properly
+   * from complex or encoded curl commands.
+   *
+   * @param url - The full URL string from which to extract query parameters.
+   * @returns An object where each key is a query parameter name and its value is the corresponding parameter value.
+   */
+  extractQueryParamsFromUrl = (url: string): Record<string, string> => {
+    const urlObj = new URL(url);
+    const params: Record<string, string> = {};
+    urlObj.searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+    return params;
+  };
+
   async parseCurl(req: string): Promise<TransformedRequest> {
     try {
       const curlconverter = await this.importCurlConverter();
@@ -119,6 +138,12 @@ export class AppService {
       }
       const stringifiedCurl = toJsonString(updatedCurl);
       const parsedCurl = JSON.parse(stringifiedCurl);
+
+      // Fallback: Manually extracting query params, in case "curlConverter" isn't able to process query params
+      if (!parsedCurl.queries || parsedCurl.url.includes("?")) {
+        parsedCurl.queries = this.extractQueryParamsFromUrl(parsedCurl.url);
+      }
+
       // Match all -F flags with their key-value pairs
       const formDataMatches = curl.match(/-F\s+'([^=]+)=@([^;]+)/g);
       const formDataItems = formDataMatches

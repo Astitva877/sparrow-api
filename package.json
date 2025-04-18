@@ -25,7 +25,9 @@
     "docker:down": "docker compose down -v",
     "docker:up:api": "docker compose up api --build -d",
     "docker:up:mongo": "docker compose up mongo --build -d",
-    "docker:up:kafka": "docker compose up kafka --build -d"
+    "docker:up:kafka": "docker compose up kafka --build -d",
+    "start:migration": "ts-node -r tsconfig-paths/register src/migration.ts",
+    "start:migration-testflow": "ts-node -r tsconfig-paths/register src/migrationTestflow.ts"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",

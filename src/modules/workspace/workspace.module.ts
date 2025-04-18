@@ -49,6 +49,7 @@ import { UpdatesService } from "./services/updates.service";
 import { AiAssistantService } from "./services/ai-assistant.service";
 import { ChatbotStatsService } from "./services/chatbot-stats.service";
 import { TestflowService } from "./services/testflow.service";
+import { TeamUserService } from "../identity/services/team-user.service";
 
 // ---- Gateway
 import {
@@ -65,6 +66,7 @@ import {
   providers: [
     WorkspaceService,
     WorkspaceRepository,
+    TeamUserService,
     WorkspaceUserService,
     WorkspaceHandler,
     AddUserHandler,

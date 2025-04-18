@@ -7,6 +7,9 @@ import { ConfigService } from "@nestjs/config";
 import { CollectionService } from "../services/collection.service";
 import { EnvironmentService } from "../services/environment.service";
 import { EnvironmentType } from "@src/modules/common/models/environment.model";
+import { TeamUserService } from "@src/modules/identity/services/team-user.service";
+import { TeamService } from "@src/modules/identity/services/team.service";
+import { ContextService } from "@src/modules/common/services/context.service";
 
 @Injectable()
 export class WorkspaceHandler implements OnModuleInit {
@@ -16,6 +19,9 @@ export class WorkspaceHandler implements OnModuleInit {
     private readonly configService: ConfigService,
     private readonly collectionService: CollectionService,
     private readonly environmentService: EnvironmentService,
+    private readonly teamUserService: TeamUserService,
+    private readonly teamService: TeamService,
+    private readonly contextService: ContextService,
   ) {}
 
   async onModuleInit() {
@@ -28,6 +34,29 @@ export class WorkspaceHandler implements OnModuleInit {
           const messageString = message.value.toString();
           const messageJson = JSON.parse(messageString);
           const workspace = await this.workspaceService.create(messageJson);
+          // const user = await this.contextService.get("user");
+          // const teams = await this.teamService.getTeams();
+          // for (const team of teams) {
+          //   const matchedInvite = team?.invites?.find(
+          //     (invite: any) =>
+          //       invite.email === user.email && invite.isAccepted === true,
+          //   );
+          //   if (!matchedInvite) {
+          //     continue;
+          //   }
+
+          //   await this.teamUserService.addUser({
+          //     teamId: team._id.toString(),
+          //     users: [matchedInvite.email],
+          //     role: matchedInvite.role,
+          //     workspaces: matchedInvite.workspaces,
+          //   });
+          // now remove it from invites array
+          // await this.teamUserService.removeTeamInvite(
+          //   team._id.toString(),
+          //   user.email,
+          // );
+          // }
           const sampleEnvironment = {
             name: "Sample Environment",
             workspaceId: workspace.insertedId.toString(),

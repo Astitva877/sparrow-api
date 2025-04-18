@@ -280,6 +280,16 @@ spec:
                 secretKeyRef:
                   name: release-api-v1-secret
                   key: AZURE_OPENAI_ASSISTANT_ID
+            - name: AUTH_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: release-api-v1-secret
+                  key: AUTH_BASE_URL
+            - name: MARKETING_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: release-api-v1-secret
+                  key: MARKETING_BASE_URL
 
 ---
 apiVersion: v1

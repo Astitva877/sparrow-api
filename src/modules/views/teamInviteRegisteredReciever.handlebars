@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Remove User</title>
+        <title>Leave Team</title>
 
 
         <style>
@@ -31,8 +31,6 @@
                 transition: background-color 0.3s, color 0.3s;
             }
 
-
-
             .email-text-style {
                 color: var(--email-text-color, #333);
                 font-family: "Inter", sans-serif;
@@ -56,31 +54,39 @@
 
                         <div style="margin-bottom: 5%">
                             <h2 class="email-text-style">
-                                Hi {{ownerName}},
+                                Hi {{userName}},
                             </h2>
 
-                            <p class="welcome-text email-text-style">
-                                We wanted to inform you that {{memberName}} has been removed from the {{teamName}} hub
-                                on Sparrow. Your
-                                leadership and vision drives the team forward, hence we thought we would inform you on
-                                this.
+                            <p class="email-text-style">
+                                Welcome to your new Sparrow Hub! We're thrilled to inform you that {{userName}} has <br/>invited you to contribute to the <span style="font-weight: 700; color:#333333;">{{teamName}}</span> on Sparrow as an {{role}}.
                             </p>
 
-                            <p class="welcome-text email-text-style">If you have any ideas or questions, please share them with the Sparrow team. For
-                                additional assistance, feel free to reach out at
-                                <a href="mailto:{{sparrowEmail}}"
-                                    style="text-decoration-line: underline;">{{sparrowEmail}}</a>
+                            <p class="email-text-style">Your expertise will be invaluable as the hub collaborates and innovates together. Dive in <br/>by logging into Sparrow to explore your new hub and stay in sync with everything happening.
                             </p>
 
-                            <p class="welcome-text email-text-style">
+                            <p class="email-text-style">
+                                Ready to join the hub?
+                            </p>
+
+                            <a href="{{authUrl}}/accept-team-invite/{{teamId}}/{{inviteId}}/{{email}}"
+                                style="display: inline-block; background-color: #3670F7; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                                Accept
+                            </a>
+
+
+                            <p class="email-text-style">If you have any ideas or questions, feel free to share them with the Sparrow community. For additional assistance, reach out to us at <a href="mailto:{{sparrowEmail}}"
+                                    style="text-decoration-line: underline; color:#3670F7;">contactus@sparrowapp.dev</a>
+                            </p>
+
+                            <p class="email-text-style">
                                 Warm regards, <br> The Sparrow Team <br>
                                 <a href="{{sparrowWebsite}}"
                                     style="font-weight: 400; text-decoration: none; color: #3670F7; border-bottom: 2px solid #3670F7 ;">
                                     {{sparrowWebsiteName}}</a>
                             </p>
 
-                        </div>
 
+                        </div>
 
                         <hr>
 

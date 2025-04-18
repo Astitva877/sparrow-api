@@ -296,6 +296,16 @@ spec:
                 secretKeyRef:
                   name: sparrow-api-secret
                   key: AZURE_OPENAI_ASSISTANT_ID
+            - name: AUTH_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sparrow-api-secret
+                  key: AUTH_BASE_URL
+            - name: MARKETING_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sparrow-api-secret
+                  key: MARKETING_BASE_URL
 
       imagePullSecrets:
         - name: acr-secret
