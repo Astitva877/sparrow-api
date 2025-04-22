@@ -776,6 +776,10 @@ export class Collection {
   @IsOptional()
   @Type(() => UpdaterDetails)
   updatedBy?: UpdaterDetails;
+
+  @IsOptional()
+  @IsDateString()
+  syncedAt?: Date;
 }
 
 export class CollectionDto {

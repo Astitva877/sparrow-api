@@ -113,6 +113,7 @@ export class ParserService {
           id: user._id,
           name: user.name,
         },
+        syncedAt: openApiDocument?.isActiveSyncEnabled ? new Date() : null,
       };
     }
 
