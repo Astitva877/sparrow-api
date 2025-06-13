@@ -1705,9 +1705,8 @@ export class CollectionRepository {
           mockRequestResponse.description;
       }
       if (mockRequestResponse?.isMockResponseActive !== undefined) {
-        updateObject[
-          "items.$[i].items.$[j].mockRequestResponse.isMockResponseActive"
-        ] = mockRequestResponse.isMockResponseActive;
+        updateObject["items.$[i].items.$[j].isMockResponseActive"] =
+          mockRequestResponse.isMockResponseActive;
       }
       await this.db.collection<Collection>(Collections.COLLECTION).updateOne(
         {
@@ -1739,9 +1738,8 @@ export class CollectionRepository {
           mockRequestResponse.description;
       }
       if (mockRequestResponse?.isMockResponseActive !== undefined) {
-        updateObject[
-          "items.$[i].items.$[j].items.$[k].mockRequestResponse.isMockResponseActive"
-        ] = mockRequestResponse.isMockResponseActive;
+        updateObject["items.$[i].items.$[j].items.$[k].isMockResponseActive"] =
+          mockRequestResponse.isMockResponseActive;
       }
       await this.db.collection<Collection>(Collections.COLLECTION).updateOne(
         {
