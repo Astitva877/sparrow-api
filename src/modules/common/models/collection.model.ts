@@ -424,11 +424,6 @@ export class RequestResponseMetaData {
 }
 
 export class MockRequestResponseMetaData {
-  @ApiProperty({ example: false })
-  @IsBoolean()
-  @IsOptional()
-  isMockResponseActive?: boolean;
-
   @ApiProperty({ example: "body" })
   @IsString()
   @IsOptional()
@@ -793,6 +788,11 @@ export class CollectionItem {
   @IsString()
   @IsNotEmpty()
   type: ItemTypeEnum;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  @IsOptional()
+  isMockResponseActive?: boolean;
 
   @ApiProperty({ enum: ["SPEC", "USER"] })
   @IsEnum(SourceTypeEnum)
