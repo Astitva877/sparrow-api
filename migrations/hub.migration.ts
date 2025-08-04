@@ -13,6 +13,7 @@ export class HubMigration implements OnModuleInit {
       .collection<Team>(Collections.TEAM)
       .find({ hubUrl: { $exists: false } })
       .toArray();
+    let count = 0;
 
     for (const team of teams) {
       // const base = this.sanitizeName(team.name);
@@ -29,7 +30,14 @@ export class HubMigration implements OnModuleInit {
           { "team.id": team._id.toString() },
           { $set: { "team.hubUrl": hubUrl } },
         );
+      console.log(
+        `\x1b[36mUpdated team ${team.name} with hubUrl: ${hubUrl}\x1b[0m`,
+      );
+      count++;
     }
+    console.log(
+      `\x1b[32mMigration completed: ${count} teams updated with hub URLs.\x1b[0m`,
+    );
   }
 
   private sanitizeName(name: string): string {
