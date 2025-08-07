@@ -7,6 +7,7 @@ import {
 } from "@nestjs/websockets";
 import { Server, WebSocket } from "ws";
 import { AiAssistantService } from "../services/ai-assistant.service";
+import { IncomingMessage } from "node:http";
 
 /**
  * WebSocket Gateway for AI Assistant.
@@ -14,9 +15,10 @@ import { AiAssistantService } from "../services/ai-assistant.service";
  * for the AI Assistant service.
  */
 
-@WebSocketGateway({ path: "/ai-assistant" , cors: true})
-export class AiAssistantGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
-
+@WebSocketGateway({ path: "/ai-assistant", cors: true })
+export class AiAssistantGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
   @WebSocketServer()
   private server: Server;
 
@@ -24,17 +26,30 @@ export class AiAssistantGateway implements OnGatewayConnection, OnGatewayDisconn
 
   afterInit(server: Server) {
     console.log("WebSocket server initialized");
+    // The ws library provides the request object in the 'connection' event.
+    // We can listen for this event directly on the server.
+    server.on("connection", (client: WebSocket, request: IncomingMessage) => {
+      console.log("Headers from the incoming request:", request.headers);
+
+      // You can also add the request object to the client for later use if needed.
+      // (client as any).request = request;
+    });
   }
 
   async handleConnection(client: WebSocket) {
-    console.log("Client connected");
-  
+    console.log("Client connected-------------------------------------->");
+
     client.on("close", () => {
       console.log("Client disconnected");
     });
-  
+
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ event: "connected", message: "Welcome to AI Assistant!" }));
+      client.send(
+        JSON.stringify({
+          event: "connected",
+          message: "Welcome to AI Assistant!",
+        }),
+      );
       this.aiAssistantService.generateTextChatBot(client);
     }
   }
